@@ -6,7 +6,7 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
 
     private let SW: CGFloat = 160   // sidebar width
     private let WW: CGFloat = 560   // window width
-    private let WH: CGFloat = 400   // window height
+    private let WH: CGFloat = 420   // window height
     private var CW: CGFloat { WW - SW - 1 }
 
     // MARK: - Views
@@ -20,7 +20,15 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
     private let loginToggle  = NSButton(checkboxWithTitle: "로그인 시 자동 실행 / Launch at Login", target: nil, action: nil)
 
     // Shortcuts
-    private let altTabToggle = NSButton(checkboxWithTitle: "AltTab 연동 / AltTab Integration", target: nil, action: nil)
+    private let altTabToggle       = NSButton(checkboxWithTitle: "AltTab 연동 / AltTab Integration", target: nil, action: nil)
+    private let windowsShortcutsToggle = NSButton(checkboxWithTitle: "Windows 단축키 프리셋 / Windows Shortcut Preset", target: nil, action: nil)
+
+    // Mouse
+    private let reverseScrollToggle    = NSButton(checkboxWithTitle: "마우스 스크롤 방향 반전 / Reverse Scroll", target: nil, action: nil)
+    private let mouseNavigationToggle  = NSButton(checkboxWithTitle: "마우스 뒤로/앞으로 버튼 / Mouse Back/Forward", target: nil, action: nil)
+
+    // Clipboard
+    private let clipboardHistoryToggle = NSButton(checkboxWithTitle: "클립보드 히스토리 / Clipboard History", target: nil, action: nil)
 
     // Exclude
     private var excludeApps: [String] = []
@@ -64,7 +72,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         sidebar.frame = NSRect(x: 0, y: 0, width: SW, height: WH)
         view.addSubview(sidebar)
 
-        // Icon
         let iconView = NSImageView()
         if let img = NSImage(systemSymbolName: "square.on.square", accessibilityDescription: nil) {
             iconView.image = img.withSymbolConfiguration(
@@ -74,7 +81,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         iconView.frame = NSRect(x: (SW - 36) / 2, y: WH - 70, width: 36, height: 36)
         sidebar.addSubview(iconView)
 
-        // App name
         let nameLabel = NSTextField(labelWithString: "WinTab")
         nameLabel.font      = NSFont.boldSystemFont(ofSize: 14)
         nameLabel.textColor = .labelColor
@@ -82,22 +88,22 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         nameLabel.frame     = NSRect(x: 0, y: WH - 96, width: SW, height: 20)
         sidebar.addSubview(nameLabel)
 
-        let versionLabel = NSTextField(labelWithString: "v1.0.0")
+        let versionLabel = NSTextField(labelWithString: "v1.1.0")
         versionLabel.font      = NSFont.systemFont(ofSize: 10)
         versionLabel.textColor = .tertiaryLabelColor
         versionLabel.alignment = .center
         versionLabel.frame     = NSRect(x: 0, y: WH - 114, width: SW, height: 14)
         sidebar.addSubview(versionLabel)
 
-        // Separator
         let sep = NSBox(); sep.boxType = .separator
         sep.frame = NSRect(x: 12, y: WH - 126, width: SW - 24, height: 1)
         sidebar.addSubview(sep)
 
-        // Navigation items
         let items: [(String, String)] = [
-            ("일반",   "gearshape"),
-            ("단축키", "keyboard"),
+            ("일반",    "gearshape"),
+            ("단축키",  "keyboard"),
+            ("마우스",  "computermouse"),
+            ("클립보드", "doc.on.clipboard"),
             ("제외 앱", "xmark.circle"),
         ]
         let startY: CGFloat = WH - 172
@@ -110,7 +116,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
             sidebarBtns.append(btn)
         }
 
-        // Divider between sidebar and content
         let divider = NSBox(); divider.boxType = .separator
         divider.frame = NSRect(x: SW, y: 0, width: 1, height: WH)
         view.addSubview(divider)
@@ -130,7 +135,9 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         switch idx {
         case 0: page = buildGeneralPage()
         case 1: page = buildShortcutsPage()
-        case 2: page = buildExcludePage()
+        case 2: page = buildMousePage()
+        case 3: page = buildClipboardPage()
+        case 4: page = buildExcludePage()
         default: return
         }
         page.frame = NSRect(x: 0, y: 0, width: CW, height: WH)
@@ -146,7 +153,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         title.frame = NSRect(x: 24, y: WH - 52, width: 200, height: 24)
         page.addSubview(title)
 
-        // Enable toggle card
         let enableCard = makeCard(y: WH - 132, h: 66)
         enableToggle.frame  = NSRect(x: 14, y: 38, width: CW - 48, height: 18)
         enableToggle.target = self; enableToggle.action = #selector(save)
@@ -155,7 +161,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         enableCard.addSubview(enableToggle); enableCard.addSubview(d1)
         page.addSubview(enableCard)
 
-        // Login toggle card
         let loginCard = makeCard(y: WH - 216, h: 66)
         loginToggle.frame   = NSRect(x: 14, y: 38, width: CW - 48, height: 18)
         loginToggle.target  = self; loginToggle.action = #selector(save)
@@ -164,7 +169,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         loginCard.addSubview(loginToggle); loginCard.addSubview(d2)
         page.addSubview(loginCard)
 
-        // Accessibility button
         let accessBtn = NSButton(title: " 손쉬운 사용 설정", target: self, action: #selector(openAccessibility))
         accessBtn.image         = NSImage(systemSymbolName: "hand.raised.fill", accessibilityDescription: nil)
         accessBtn.imagePosition = .imageLeft
@@ -173,7 +177,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         accessBtn.frame         = NSRect(x: 16, y: 58, width: 160, height: 28)
         page.addSubview(accessBtn)
 
-        // Bottom buttons
         let githubBtn = NSButton(title: " GitHub", target: self, action: #selector(openGitHub))
         githubBtn.image         = NSImage(systemSymbolName: "arrow.up.right.square", accessibilityDescription: nil)
         githubBtn.imagePosition = .imageLeft
@@ -203,19 +206,31 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         title.frame = NSRect(x: 24, y: WH - 52, width: 200, height: 24)
         page.addSubview(title)
 
-        // How it works info box
-        let infoBox = NSBox()
-        infoBox.boxType       = .custom
-        infoBox.fillColor     = NSColor.systemBlue.withAlphaComponent(0.07)
-        infoBox.borderColor   = NSColor.systemBlue.withAlphaComponent(0.22)
-        infoBox.borderWidth   = 0.5
-        infoBox.cornerRadius  = 10
-        infoBox.frame         = NSRect(x: 16, y: WH - 230, width: CW - 32, height: 160)
+        // Windows 단축키 프리셋 카드
+        let winCard = makeCard(y: WH - 148, h: 84)
+        windowsShortcutsToggle.frame  = NSRect(x: 14, y: 52, width: CW - 48, height: 18)
+        windowsShortcutsToggle.target = self; windowsShortcutsToggle.action = #selector(save)
+        let dw1 = makeDesc("Ctrl+C/V/X/Z/A/S/W/T/R/F/N → Cmd+C/V/X/Z/A/S/W/T/R/F/N")
+        dw1.frame = NSRect(x: 33, y: 32, width: CW - 66, height: 14)
+        let dw2 = makeDesc("Karabiner 없이 Windows 스타일 단축키를 사용합니다.")
+        dw2.frame = NSRect(x: 33, y: 13, width: CW - 66, height: 14)
+        winCard.addSubview(windowsShortcutsToggle)
+        winCard.addSubview(dw1); winCard.addSubview(dw2)
+        page.addSubview(winCard)
 
-        let infoTitle = NSTextField(labelWithString: "⌨️  작동 방식")
+        // 작동 방식 인포박스
+        let infoBox = NSBox()
+        infoBox.boxType      = .custom
+        infoBox.fillColor    = NSColor.systemBlue.withAlphaComponent(0.07)
+        infoBox.borderColor  = NSColor.systemBlue.withAlphaComponent(0.22)
+        infoBox.borderWidth  = 0.5
+        infoBox.cornerRadius = 10
+        infoBox.frame        = NSRect(x: 16, y: WH - 308, width: CW - 32, height: 140)
+
+        let infoTitle = NSTextField(labelWithString: "⌨️  탭 전환 작동 방식")
         infoTitle.font      = NSFont.boldSystemFont(ofSize: 11)
         infoTitle.textColor = .systemBlue
-        infoTitle.frame     = NSRect(x: 14, y: 130, width: 200, height: 16)
+        infoTitle.frame     = NSRect(x: 14, y: 110, width: 200, height: 16)
         infoBox.addSubview(infoTitle)
 
         let rows: [(String, String)] = [
@@ -226,29 +241,118 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         rows.enumerated().forEach { i, row in
             let k = NSTextField(labelWithString: row.0)
             k.font  = NSFont.monospacedSystemFont(ofSize: 11, weight: .semibold)
-            k.frame = NSRect(x: 14, y: 98 - CGFloat(i) * 30, width: 170, height: 18)
+            k.frame = NSRect(x: 14, y: 78 - CGFloat(i) * 30, width: 170, height: 18)
             infoBox.addSubview(k)
-
             let v = NSTextField(labelWithString: row.1)
             v.font      = NSFont.systemFont(ofSize: 11)
             v.textColor = .secondaryLabelColor
-            v.frame     = NSRect(x: 188, y: 98 - CGFloat(i) * 30, width: CW - 230, height: 18)
+            v.frame     = NSRect(x: 188, y: 78 - CGFloat(i) * 30, width: CW - 230, height: 18)
             infoBox.addSubview(v)
         }
         page.addSubview(infoBox)
 
-        // AltTab card (Karabiner 안내 포함)
-        let altCard = makeCard(y: WH - 338, h: 90)
-        altTabToggle.frame  = NSRect(x: 14, y: 58, width: CW - 48, height: 18)
+        // AltTab 카드
+        let altCard = makeCard(y: WH - 410, h: 84)
+        altTabToggle.frame  = NSRect(x: 14, y: 52, width: CW - 48, height: 18)
         altTabToggle.target = self; altTabToggle.action = #selector(save)
         let da1 = makeDesc("ON: AltTab 앱이 Alt+Tab을 직접 처리합니다.")
-        da1.frame = NSRect(x: 33, y: 37, width: CW - 66, height: 14)
+        da1.frame = NSRect(x: 33, y: 32, width: CW - 66, height: 14)
         let da2 = makeDesc("OFF: macOS 기본 Command+Tab 앱전환으로 동작합니다.")
-        da2.frame = NSRect(x: 33, y: 18, width: CW - 66, height: 14)
-        altCard.addSubview(altTabToggle)
-        altCard.addSubview(da1)
-        altCard.addSubview(da2)
+        da2.frame = NSRect(x: 33, y: 13, width: CW - 66, height: 14)
+        altCard.addSubview(altTabToggle); altCard.addSubview(da1); altCard.addSubview(da2)
         page.addSubview(altCard)
+
+        let sv = makeSaveButton()
+        sv.frame = NSRect(x: CW - 92, y: 16, width: 76, height: 28)
+        page.addSubview(sv)
+
+        return page
+    }
+
+    // MARK: - Mouse Page
+
+    private func buildMousePage() -> NSView {
+        let page = NSView()
+
+        let title = pageTitle("마우스")
+        title.frame = NSRect(x: 24, y: WH - 52, width: 200, height: 24)
+        page.addSubview(title)
+
+        // 스크롤 반전 카드
+        let scrollCard = makeCard(y: WH - 148, h: 84)
+        reverseScrollToggle.frame  = NSRect(x: 14, y: 52, width: CW - 48, height: 18)
+        reverseScrollToggle.target = self; reverseScrollToggle.action = #selector(save)
+        let ds1 = makeDesc("마우스 휠 스크롤 방향을 반전합니다. (트랙패드 제외)")
+        ds1.frame = NSRect(x: 33, y: 32, width: CW - 66, height: 14)
+        let ds2 = makeDesc("Windows 방식: 휠 아래 → 화면 아래로 스크롤")
+        ds2.frame = NSRect(x: 33, y: 13, width: CW - 66, height: 14)
+        scrollCard.addSubview(reverseScrollToggle); scrollCard.addSubview(ds1); scrollCard.addSubview(ds2)
+        page.addSubview(scrollCard)
+
+        // 마우스 뒤로/앞으로 카드
+        let navCard = makeCard(y: WH - 250, h: 84)
+        mouseNavigationToggle.frame  = NSRect(x: 14, y: 52, width: CW - 48, height: 18)
+        mouseNavigationToggle.target = self; mouseNavigationToggle.action = #selector(save)
+        let dn1 = makeDesc("마우스 4번 버튼 → 뒤로가기  (⌘[)")
+        dn1.frame = NSRect(x: 33, y: 32, width: CW - 66, height: 14)
+        let dn2 = makeDesc("마우스 5번 버튼 → 앞으로가기  (⌘])")
+        dn2.frame = NSRect(x: 33, y: 13, width: CW - 66, height: 14)
+        navCard.addSubview(mouseNavigationToggle); navCard.addSubview(dn1); navCard.addSubview(dn2)
+        page.addSubview(navCard)
+
+        let sv = makeSaveButton()
+        sv.frame = NSRect(x: CW - 92, y: 16, width: 76, height: 28)
+        page.addSubview(sv)
+
+        return page
+    }
+
+    // MARK: - Clipboard Page
+
+    private func buildClipboardPage() -> NSView {
+        let page = NSView()
+
+        let title = pageTitle("클립보드")
+        title.frame = NSRect(x: 24, y: WH - 52, width: 200, height: 24)
+        page.addSubview(title)
+
+        // 히스토리 활성화 카드
+        let clipCard = makeCard(y: WH - 148, h: 84)
+        clipboardHistoryToggle.frame  = NSRect(x: 14, y: 52, width: CW - 48, height: 18)
+        clipboardHistoryToggle.target = self; clipboardHistoryToggle.action = #selector(save)
+        let dc1 = makeDesc("최근 복사한 텍스트 20개를 저장합니다.")
+        dc1.frame = NSRect(x: 33, y: 32, width: CW - 66, height: 14)
+        let dc2 = makeDesc("단축키: Ctrl+Shift+V  →  히스토리 팝업 열기")
+        dc2.frame = NSRect(x: 33, y: 13, width: CW - 66, height: 14)
+        clipCard.addSubview(clipboardHistoryToggle); clipCard.addSubview(dc1); clipCard.addSubview(dc2)
+        page.addSubview(clipCard)
+
+        // 안내 인포박스
+        let infoBox = NSBox()
+        infoBox.boxType      = .custom
+        infoBox.fillColor    = NSColor.systemGreen.withAlphaComponent(0.07)
+        infoBox.borderColor  = NSColor.systemGreen.withAlphaComponent(0.3)
+        infoBox.borderWidth  = 0.5
+        infoBox.cornerRadius = 10
+        infoBox.frame        = NSRect(x: 16, y: WH - 280, width: CW - 32, height: 110)
+
+        let infoTitle = NSTextField(labelWithString: "📋  사용 방법")
+        infoTitle.font      = NSFont.boldSystemFont(ofSize: 11)
+        infoTitle.textColor = .systemGreen
+        infoTitle.frame     = NSRect(x: 14, y: 82, width: 200, height: 16)
+        infoBox.addSubview(infoTitle)
+
+        let hints: [String] = [
+            "1. 텍스트를 복사하면 자동으로 히스토리에 저장됩니다.",
+            "2. Ctrl+Shift+V 를 누르면 히스토리 팝업이 열립니다.",
+            "3. 항목을 선택하고 붙여넣기 또는 더블클릭하세요.",
+        ]
+        hints.enumerated().forEach { i, hint in
+            let tf = makeDesc(hint)
+            tf.frame = NSRect(x: 14, y: 58 - CGFloat(i) * 22, width: CW - 60, height: 16)
+            infoBox.addSubview(tf)
+        }
+        page.addSubview(infoBox)
 
         let sv = makeSaveButton()
         sv.frame = NSRect(x: CW - 92, y: 16, width: 76, height: 28)
@@ -266,15 +370,13 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         title.frame = NSRect(x: 24, y: WH - 52, width: 200, height: 24)
         page.addSubview(title)
 
-        let sub = makeDesc("아래 앱에서는 Ctrl+Tab 변환이 비활성화됩니다.")
+        let sub = makeDesc("아래 앱에서는 모든 변환 기능이 비활성화됩니다.")
         sub.frame = NSRect(x: 24, y: WH - 76, width: CW - 48, height: 16)
         page.addSubview(sub)
 
-        // Table
         excludeScrollView.frame = NSRect(x: 16, y: 108, width: CW - 32, height: WH - 200)
         page.addSubview(excludeScrollView)
 
-        // Input + Add
         excludeField.placeholderString = "com.apple.Safari"
         excludeField.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         excludeField.frame = NSRect(x: 16, y: 72, width: CW - 94, height: 26)
@@ -285,7 +387,6 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
         addBtn.frame      = NSRect(x: CW - 74, y: 72, width: 58, height: 26)
         page.addSubview(addBtn)
 
-        // Remove
         let removeBtn = NSButton(title: "− 선택 제거", target: self, action: #selector(removeExcludeApp))
         removeBtn.bezelStyle = .rounded
         removeBtn.frame      = NSRect(x: 16, y: 36, width: 100, height: 26)
@@ -335,18 +436,26 @@ class SettingsViewController: NSViewController, NSTableViewDataSource, NSTableVi
 
     private func loadSettings() {
         let s = Settings.shared
-        enableToggle.state  = s.enabled           ? .on : .off
-        loginToggle.state   = s.launchAtLogin     ? .on : .off
-        altTabToggle.state  = s.altTabIntegration ? .on : .off
+        enableToggle.state           = s.enabled           ? .on : .off
+        loginToggle.state            = s.launchAtLogin     ? .on : .off
+        altTabToggle.state           = s.altTabIntegration ? .on : .off
+        windowsShortcutsToggle.state = s.windowsShortcuts  ? .on : .off
+        reverseScrollToggle.state    = s.reverseScroll     ? .on : .off
+        mouseNavigationToggle.state  = s.mouseNavigation   ? .on : .off
+        clipboardHistoryToggle.state = s.clipboardHistory  ? .on : .off
         excludeApps = s.excludedApps
         excludeTable.reloadData()
     }
 
     @objc private func save() {
         let s = Settings.shared
-        s.enabled           = enableToggle.state == .on
-        s.launchAtLogin     = loginToggle.state  == .on
-        s.altTabIntegration = altTabToggle.state == .on
+        s.enabled           = enableToggle.state           == .on
+        s.launchAtLogin     = loginToggle.state            == .on
+        s.altTabIntegration = altTabToggle.state           == .on
+        s.windowsShortcuts  = windowsShortcutsToggle.state == .on
+        s.reverseScroll     = reverseScrollToggle.state    == .on
+        s.mouseNavigation   = mouseNavigationToggle.state  == .on
+        s.clipboardHistory  = clipboardHistoryToggle.state == .on
         s.excludedApps      = excludeApps
         NotificationCenter.default.post(name: .settingsChanged, object: nil)
     }
@@ -406,8 +515,8 @@ class SidebarBtn: NSButton {
         self.font       = NSFont.systemFont(ofSize: 13)
         self.alignment  = .left
         if let img = NSImage(systemSymbolName: icon, accessibilityDescription: nil) {
-            self.image         = img
-            self.imagePosition = .imageLeft
+            self.image          = img
+            self.imagePosition  = .imageLeft
             self.imageHugsTitle = true
         }
         self.contentTintColor = .secondaryLabelColor

@@ -27,6 +27,26 @@ class Settings {
         }
     }
 
+    var windowsShortcuts: Bool {
+        get { defaults.bool(forKey: "windowsShortcuts") }
+        set { defaults.set(newValue, forKey: "windowsShortcuts") }
+    }
+
+    var reverseScroll: Bool {
+        get { defaults.bool(forKey: "reverseScroll") }
+        set { defaults.set(newValue, forKey: "reverseScroll") }
+    }
+
+    var mouseNavigation: Bool {
+        get { defaults.bool(forKey: "mouseNavigation") }
+        set { defaults.set(newValue, forKey: "mouseNavigation") }
+    }
+
+    var clipboardHistory: Bool {
+        get { defaults.bool(forKey: "clipboardHistory") }
+        set { defaults.set(newValue, forKey: "clipboardHistory") }
+    }
+
     private func setLaunchAtLogin(_ enable: Bool) {
         let plistPath = NSString(string: "~/Library/LaunchAgents/com.wintab.plist").expandingTildeInPath
         if enable {
@@ -49,7 +69,6 @@ class Settings {
 </plist>
 """
             try? content.write(toFile: plistPath, atomically: true, encoding: .utf8)
-            let _ = Process()
             let task = Process()
             task.launchPath = "/bin/launchctl"
             task.arguments = ["load", plistPath]

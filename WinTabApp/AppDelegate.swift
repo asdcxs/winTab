@@ -16,6 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         setupMenu()
+        ClipboardManager.shared.start()
 
         // 손쉬운 사용 권한 확인
         if !AXIsProcessTrusted() {
@@ -72,7 +73,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let vc = SettingsViewController()
             settingsWindow = NSWindow(contentViewController: vc)
             settingsWindow?.title = "WinTab 설정"
-            settingsWindow?.setContentSize(NSSize(width: 560, height: 400))
+            settingsWindow?.setContentSize(NSSize(width: 560, height: 420))
             settingsWindow?.styleMask = [.titled, .closable]
             settingsWindow?.center()
         }
